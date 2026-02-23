@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang=\"lv\">
+<html lang="lv">
 <head>
-    <meta charset=\"UTF-8\">
-    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Latvijas Live Kameru Portāls</title>
     <style>
         :root { --accent: #00ffcc; --bg: #0a0c10; --card: #151921; --text: #e1e4e8; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
         header { background: #161b22; padding: 1rem 2rem; border-bottom: 2px solid var(--accent); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
         .logo { font-size: 1.5rem; font-weight: 900; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; padding: 2rem; }
@@ -29,67 +29,69 @@
 </head>
 <body>
     <header>
-        <div class=\"logo\">Latvia Live 🎥</div>
-        <div class=\"stats\" id=\"camStats\">Ielādē kameras...</div>
+        <div class="logo">Latvia Live 🎥</div>
+        <div class="stats" id="camStats">Ielādē kameras...</div>
     </header>
-    <div class=\"filters\" id=\"filterContainer\">
-        <button class=\"filter-btn active\" onclick=\"filterCams('all')\">Visi</button>
-        <button class=\"filter-btn\" onclick=\"filterCams('riga')\">Rīga</button>
-        <button class=\"filter-btn\" onclick=\"filterCams('city')\">Pilsētas</button>
-        <button class=\"filter-btn\" onclick=\"filterCams('nature')\">Daba</button>
+    <div class="filters" id="filterContainer">
+        <button class="filter-btn active" onclick="filterCams('all')">Visi</button>
+        <button class="filter-btn" onclick="filterCams('riga')">Rīga</button>
+        <button class="filter-btn" onclick="filterCams('city')">Pilsētas</button>
+        <button class="filter-btn" onclick="filterCams('nature')">Daba</button>
     </div>
-    <main class=\"grid\" id=\"camGrid\"></main>
+    <main class="grid" id="camGrid"></main>
 
     <script>
         const cameras = [
-            { id: 'aNH6O86-6wQ', title: 'Rīga - Ielas skats (Mochuma)', city: 'Rīga', type: 'riga' },
+            { id: 'aNH6O86-6wQ', title: 'Rīga - Ielas skats', city: 'Rīga', type: 'riga' },
             { id: '3wSd4iXrCw0', title: 'Durbes jūras ērgļi', city: 'Durbe', type: 'nature' },
             { id: 'vu7bChYGfiA', title: 'LDF Jūras ērglis #1', city: 'Latvija', type: 'nature' },
             { id: 'Bo7z7WwAFZs', title: 'Baltie stārķi (Tukums)', city: 'Tukums', type: 'nature' },
-            { id: 'j68XhwtLGhM', title: 'Rīgas Lidosta (Tiešraide)', city: 'Rīga', type: 'riga' },
-            { id: 'THA7pGNnpGs', title: 'Rīgas Centrs (Live)', city: 'Rīga', type: 'riga' },
-            { id: 'BnLcCs_NYUM', title: 'Baltijas jūra - Panorāma', city: 'Latvija', type: 'nature' },
-            { id: 'qrDNVHnSmpA', title: 'Bikernieki - Drifts/Sacīkstes', city: 'Rīga', type: 'city' },
+            { id: 'j68XhwtLGhM', title: 'Rīgas Lidosta', city: 'Rīga', type: 'riga' },
+            { id: 'THA7pGNnpGs', title: 'Rīgas Centrs', city: 'Rīga', type: 'riga' },
+            { id: 'BnLcCs_NYUM', title: 'Baltijas jūra', city: 'Latvija', type: 'nature' },
+            { id: 'qrDNVHnSmpA', title: 'Bikernieki', city: 'Rīga', type: 'city' },
             { id: 'Mgu__P7-KgU', title: 'Rīgas Vakara Panorāma', city: 'Rīga', type: 'riga' },
-            { id: '1eInqIDEdsg', title: 'Rīgas Futsals / Sports', city: 'Rīga', type: 'city' },
+            { id: '1eInqIDEdsg', title: 'Rīgas Futsals', city: 'Rīga', type: 'city' },
             { id: 'VnEjrCFV1lo', title: 'Nakts Rīga', city: 'Rīga', type: 'riga' },
             { id: 'RjvdRAdda0c', title: 'Sporta notikumi LV', city: 'Latvija', type: 'city' }
         ];
 
         function renderCams(filter = 'all') {
             const grid = document.getElementById('camGrid');
+            const stats = document.getElementById('camStats');
+            if (!grid) return;
             grid.innerHTML = '';
             const filtered = filter === 'all' ? cameras : cameras.filter(c => c.type === filter);
             
             filtered.forEach(cam => {
                 const card = document.createElement('div');
                 card.className = 'card';
+                const videoUrl = 'https://www.youtube.com/embed/' + cam.id + '?autoplay=1&mute=1&rel=0';
                 card.innerHTML = `
-                    <div class=\"video-container\">
-                        <iframe src=\"https://www.youtube.com/embed/${cam.id}?autoplay=1&mute=1&rel=0\" 
-                                allow=\"autoplay; encrypted-media; fullscreen\" allowfullscreen></iframe>
+                    <div class="video-container">
+                        <iframe sr="\${videoUrl}" 
+                                allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
                     </div>
-                    <div class=\"card-info\">
-                        <div class=\"card-title\">
+                    <div class="cad-info">
+                        <div class="card-title">
                             <span>${cam.title}</span>
-                            <span class=\"live-tag\">LIVE</span>
+                            <span class="live-tag">LIVE</span>
                         </div>
-                        <div class=\"stats\">${cam.city}</div>
+                        <div class="stats">\${cam.city}</div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
-            document.getElementById('camStats').innerText = `Rāda ${filtered.length} kameras`;
+            if (stats) stats.innerText = 'Rāda ' + filtered.length + ' kameras';
         }
 
         function filterCams(type) {
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            if (event && event.target) event.target.classList.add('active');
             renderCams(type);
         }
 
-        // Sākotnējā ielāde
-        renderCams();
+        window.onload = () => renderCams();
     </script>
 </body>
 </html>
