@@ -1,136 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang=\"lv\">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Daytime Live Cams</title>
+    <meta charset=\"UTF-8\">
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <title>Latvijas Live Kameru Portāls</title>
     <style>
+        :root { --accent: #00ffcc; --bg: #0a0c10; --card: #151921; --text: #e1e4e8; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0b0e14; color: #e1e4e8; min-height: 100vh; }
-        .header { background: #161b22; padding: 15px 25px; border-bottom: 2px solid #f0a500; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-        .header h1 { color: #f0a500; font-size: 1.4rem; }
-        .header .controls { display: flex; gap: 10px; align-items: center; }
-        .btn { background: #f0a500; color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn:hover { background: #d49000; }
-        .stats-bar { background: #1c2128; padding: 8px 25px; font-size: 0.85rem; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px; padding: 20px; }
-        .card { background: #161b22; border-radius: 8px; overflow: hidden; border: 1px solid #30363d; transition: 0.3s; }
-        .card:hover { border-color: #f0a500; transform: translateY(-2px); }
-        .card-header { padding: 10px; background: #21262d; display: flex; justify-content: space-between; align-items: center; }
-        .card-title { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #f0a500; color: #000; font-weight: bold; }
-        .frame-box { position: relative; padding-top: 56.25%; background: #000; }
-        .frame-box iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-        .card-footer { padding: 8px 10px; font-size: 0.8rem; color: #8b949e; display: flex; justify-content: space-between; align-items: center; }
-        .time-badge { color: #4ade80; font-weight: bold; }
-        .no-results { grid-column: 1/-1; text-align: center; padding: 50px; color: #8b949e; }
-        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+        body { font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+        header { background: #161b22; padding: 1rem 2rem; border-bottom: 2px solid var(--accent); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 1.5rem; font-weight: 900; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; padding: 2rem; }
+        .card { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid #30363d; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
+        .card:hover { border-color: var(--accent); transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,255,204,0.1); }
+        .video-container { position: relative; padding-top: 56.25%; background: #000; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        .card-info { padding: 1rem; border-top: 1px solid #30363d; }
+        .card-title { font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem; display: flex; justify-content: space-between; }
+        .live-tag { color: #ff4444; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; gap: 4px; }
+        .live-tag::before { content: ''; width: 8px; height: 8px; background: #ff4444; border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        .filters { padding: 0.5rem 2rem; background: #1c2128; border-bottom: 1px solid #30363d; display: flex; gap: 1rem; overflow-x: auto; }
+        .filter-btn { background: none; border: 1px solid #30363d; color: #8b949e; padding: 0.4rem 1rem; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 0.85rem; }
+        .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+        .stats { font-size: 0.8rem; color: #8b949e; }
+        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; padding: 1rem; } }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>☀️ Daytime World Explorer</h1>
-        <div class="controls">
-            <span id="utcTime" style="font-family: monospace; font-size: 1.1rem; color: #4ade80;"></span>
-            <button class="btn" onclick="updateView()">Refresh Daytime Cams</button>
-        </div>
+    <header>
+        <div class=\"logo\">Latvia Live 🎥</div>
+        <div class=\"stats\" id=\"camStats\">Ielādē kameras...</div>
+    </header>
+    <div class=\"filters\" id=\"filterContainer\">
+        <button class=\"filter-btn active\" onclick=\"filterCams('all')\">Visi</button>
+        <button class=\"filter-btn\" onclick=\"filterCams('riga')\">Rīga</button>
+        <button class=\"filter-btn\" onclick=\"filterCams('city')\">Pilsētas</button>
+        <button class=\"filter-btn\" onclick=\"filterCams('nature')\">Daba</button>
     </div>
-    <div class="stats-bar">
-        <span id="statsText">Initializing...</span>
-        <span>Auto-filtering for local time 08:00 - 18:00</span>
-    </div>
-    <div class="grid" id="grid"></div>
+    <main class=\"grid\" id=\"camGrid\"></main>
 
     <script>
-        // Database of real stable live cams with their UTC offsets
-        const camDB = [
-            // UTC +13 / +12 (New Zealand, Fiji)
-            { title: 'Auckland - Harbour Skyline', offset: 13, src: 'https://www.youtube.com/embed/BQR800Gu28g?autoplay=1&mute=1', provider: 'YouTube' },
-            { title: 'Auckland - CBD 4K', offset: 13, src: 'https://www.youtube.com/embed/LzoqdE76sqI?autoplay=1&mute=1', provider: 'YouTube' },
-            
-            // UTC +11 / +10 (Australia East Coast)
-            { title: 'Sydney - Opera House', offset: 11, src: 'https://www.youtube.com/embed/5uZa3-RMFos?autoplay=1&mute=1', provider: 'YouTube' },
-            { title: 'Sydney - Harbour Bridge', offset: 11, src: 'https://www.youtube.com/embed/jshwkG1ZpP8?autoplay=1&mute=1', provider: 'YouTube' },
-            { title: 'Melbourne - Street View', offset: 11, src: 'https://www.youtube.com/embed/fOiFXweVdrE?autoplay=1&mute=1', provider: 'YouTube' },
-            { title: 'Brisbane - City Panorama', offset: 10, src: 'https://embed.windy.com/embed2.html?lat=-27.47&lon=153.02&zoom=11&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=&metricTemp=&radarRange=-1', provider: 'Windy' },
-
-            // UTC +9 (Japan, Korea)
-            { title: 'Tokyo - Shibuya Crossing', offset: 9, src: 'https://www.youtube.com/embed/8H3nRCFVR6Y?autoplay=1&mute=1', provider: 'YouTube' },
-            { title: 'Tokyo - Rainbow Bridge', offset: 9, src: 'https://embed.windy.com/embed2.html?lat=35.63&lon=139.77&zoom=12&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=&metricTemp=&radarRange=-1', provider: 'Windy' },
-            { title: 'Seoul - Han River', offset: 9, src: 'https://embed.windy.com/embed2.html?lat=37.56&lon=126.97&zoom=11&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=&metricTemp=&radarRange=-1', provider: 'Windy' },
-
-            // UTC +8 (Singapore, Manila, Perth)
-            { title: 'Singapore - Marina Bay', offset: 8, src: 'https://embed.windy.com/embed2.html?lat=1.28&lon=103.85&zoom=13&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=&metricTemp=&radarRange=-1', provider: 'Windy' },
-            { title: 'Manila - Makati Skyline', offset: 8, src: 'https://embed.windy.com/embed2.html?lat=14.55&lon=121.02&zoom=12&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=&metricTemp=&radarRange=-1', provider: 'Windy' },
-
-            // UTC +5.5 (India)
-            { title: 'Mumbai - Marine Drive', offset: 5.5, src: 'https://embed.windy.com/embed2.html?lat=18.94&lon=72.82&zoom=12&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=&metricTemp=&radarRange=-1', provider: 'Windy' },
-
-            // UTC +4 / +3 (Dubai, Istanbul, Nairobi)
-            { title: 'Dubai - Marina Skyline', offset: 4, src: 'https://www.youtube.com/embed/ka9MsehA8I4?autoplay=1&mute=1', provider: 'YouTube' },
-            { title: 'Istanbul - Bosphorus', offset: 3, src: 'https://www.youtube.com/embed/0xFW3MBtpVE?autoplay=1&mute=1', provider: 'YouTube' },
-            { title: 'Kenya - Wildlife Safari', offset: 3, src: 'https://www.youtube.com/embed/qpukdDslCjk?autoplay=1&mute=1', provider: 'YouTube' },
-
-            // UTC +2 / +1 (Europe daytime starts later)
-            { title: 'Riga - Old Town', offset: 2, src: 'https://www.balticlivecam.com/cameras/latvia/riga-old-town/', provider: 'BalticLiveCam' },
-            { title: 'Berlin - Brandenburg Gate', offset: 1, src: 'https://embed.windy.com/embed2.html?lat=52.51&lon=13.37&zoom=13&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=&metricTemp=&radarRange=-1', provider: 'Windy' },
-
-            // UTC 0 / -5 (Atlantic, Americas - Currently Night/Morning)
-            { title: 'New York - Times Square', offset: -5, src: 'https://www.youtube.com/embed/rnXIjl_Rzy4?autoplay=1&mute=1', provider: 'YouTube' },
-            { title: 'Miami - Beach Front', offset: -5, src: 'https://embed.windy.com/embed2.html?lat=25.76&lon=-80.13&zoom=13&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=&metricTemp=&radarRange=-1', provider: 'Windy' }
+        const cameras = [
+            { id: 'aNH6O86-6wQ', title: 'Rīga - Ielas skats (Mochuma)', city: 'Rīga', type: 'riga' },
+            { id: '3wSd4iXrCw0', title: 'Durbes jūras ērgļi', city: 'Durbe', type: 'nature' },
+            { id: 'vu7bChYGfiA', title: 'LDF Jūras ērglis #1', city: 'Latvija', type: 'nature' },
+            { id: 'Bo7z7WwAFZs', title: 'Baltie stārķi (Tukums)', city: 'Tukums', type: 'nature' },
+            { id: 'j68XhwtLGhM', title: 'Rīgas Lidosta (Tiešraide)', city: 'Rīga', type: 'riga' },
+            { id: 'THA7pGNnpGs', title: 'Rīgas Centrs (Live)', city: 'Rīga', type: 'riga' },
+            { id: 'BnLcCs_NYUM', title: 'Baltijas jūra - Panorāma', city: 'Latvija', type: 'nature' },
+            { id: 'qrDNVHnSmpA', title: 'Bikernieki - Drifts/Sacīkstes', city: 'Rīga', type: 'city' },
+            { id: 'Mgu__P7-KgU', title: 'Rīgas Vakara Panorāma', city: 'Rīga', type: 'riga' },
+            { id: '1eInqIDEdsg', title: 'Rīgas Futsals / Sports', city: 'Rīga', type: 'city' },
+            { id: 'VnEjrCFV1lo', title: 'Nakts Rīga', city: 'Rīga', type: 'riga' },
+            { id: 'RjvdRAdda0c', title: 'Sporta notikumi LV', city: 'Latvija', type: 'city' }
         ];
 
-        function getLocalTimeData(offset) {
-            const now = new Date();
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const local = new Date(utc + (3600000 * offset));
-            return {
-                hours: local.getHours(),
-                minutes: local.getMinutes(),
-                full: local.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-            };
-        }
-
-        function updateView() {
-            const grid = document.getElementById('grid');
-            const stats = document.getElementById('statsText');
+        function renderCams(filter = 'all') {
+            const grid = document.getElementById('camGrid');
             grid.innerHTML = '';
+            const filtered = filter === 'all' ? cameras : cameras.filter(c => c.type === filter);
             
-            const daytimeCams = camDB.filter(cam => {
-                const time = getLocalTimeData(cam.offset);
-                // Filtering for daytime: between 08:00 and 18:00 local time
-                return time.hours >= 8 && time.hours <= 18;
-            });
-
-            daytimeCams.forEach(cam => {
-                const time = getLocalTimeData(cam.offset);
+            filtered.forEach(cam => {
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.innerHTML = `
-                    <div class="card-header">
-                        <span class="card-title">${cam.title}</span>
-                        <span class="badge">${cam.provider}</span>
+                    <div class=\"video-container\">
+                        <iframe src=\"https://www.youtube.com/embed/${cam.id}?autoplay=1&mute=1&rel=0\" 
+                                allow=\"autoplay; encrypted-media; fullscreen\" allowfullscreen></iframe>
                     </div>
-                    <div class="frame-box">
-                        <iframe src="${cam.src}" allow="autoplay; fullscreen" loading="lazy"></iframe>
-                    </div>
-                    <div class="card-footer">
-                        <span>UTC ${cam.offset >= 0 ? '+' : ''}${cam.offset}</span>
-                        <span class="time-badge">Local: ${time.full}</span>
+                    <div class=\"card-info\">
+                        <div class=\"card-title\">
+                            <span>${cam.title}</span>
+                            <span class=\"live-tag\">LIVE</span>
+                        </div>
+                        <div class=\"stats\">${cam.city}</div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
-
-            stats.innerText = `Found ${daytimeCams.length} locations currently in daylight.`;
-            
-            const now = new Date();
-            document.getElementById('utcTime').innerText = `UTC: ${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')}`;
+            document.getElementById('camStats').innerText = `Rāda ${filtered.length} kameras`;
         }
 
-        updateView();
-        // Refresh every 5 minutes
-        setInterval(updateView, 300000);
+        function filterCams(type) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderCams(type);
+        }
+
+        // Sākotnējā ielāde
+        renderCams();
     </script>
 </body>
 </html>
