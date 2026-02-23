@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Latvijas Live Kameru Portals</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#1a1a2e;color:#eee;min-height:100vh}
+.header{background:#16213e;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-bottom:2px solid #0f3460}
+.header h1{font-size:1.2rem;color:#e94560}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filters input,.filters select{background:#0f3460;color:#eee;border:1px solid #e94560;border-radius:4px;padding:6px 10px;font-size:0.85rem}
+.filters button{background:#e94560;color:#fff;border:none;border-radius:4px;padding:6px 14px;cursor:pointer;font-size:0.85rem}
+.filters button:hover{background:#c73652}
+.stats{font-size:0.8rem;color:#aaa;padding:4px 20px;background:#0f3460}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px}
+.cam-card{background:#16213e;border-radius:6px;overflow:hidden;border:1px solid #0f3460;transition:border-color 0.2s}
+.cam-card:hover{border-color:#e94560}
+.cam-header{padding:5px 8px;background:#0f3460;display:flex;justify-content:space-between;align-items:center}
+.cam-title{font-size:0.75rem;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+.cam-badge{font-size:0.65rem;background:#e94560;color:#fff;padding:1px 5px;border-radius:3px}
+.cam-frame{position:relative;width:100%;padding-top:56.25%}
+.cam-frame iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
+.cam-meta{padding:4px 8px;font-size:0.7rem;color:#aaa;display:flex;justify-content:space-between}
+.cam-card.hidden{display:none}
+.no-results{grid-column:1/-1;text-align:center;padding:40px;color:#aaa;font-size:1rem}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:500px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>&#127909; Latvijas Live Kameru Portals</h1>
+<div class="filters">
+<input type="text" id="search" placeholder="Meklet kameru..." oninput="filterCams()">
+<select id="cityFilter" onchange="filterCams()">
+<option value="">Visas pilsetas</option>
+<option value="riga">Riga</option>
+<option value="jurmala">Jurmala</option>
+<option value="liepaja">Liepaja</option>
+<option value="ventspils">Ventspils</option>
+<option value="sigulda">Sigulda</option>
+<option value="latvija">Latvija</option>
+</select>
+<select id="typeFilter" onchange="filterCams()">
+<option value="">Visi tipi</option>
+<option value="pilseta">Pilseta</option>
+<option value="daba">Daba</option>
+<option value="laika">Laika apstakli</option>
+<option value="celojumi">Celojumi</option>
+</select>
+<button onclick="resetFilters()">Reset</button>
+</div>
+</div>
+<div class="stats" id="statsBar">Ielāde...</div>
+<div class="grid" id="grid"></div>
+<script>
+const cameras = [
+{id:1,title:'Riga - Panorāma',city:'riga',type:'pilseta',src:'https://www.balticlivecam.com/cameras/latvia/riga-panorama/',label:'BalticLiveCam'},
+{id:2,title:'Riga - Brīvības iela',city:'riga',type:'pilseta',src:'https://www.skylinewebcams.com/en/webcam/latvija/riga/riga/riga-old-town.html',label:'SkylineWebcams'},
+{id:3,title:'Riga - Vecrīga skats',city:'riga',type:'pilseta',src:'https://www.balticlivecam.com/cameras/latvia/riga-old-town/',label:'BalticLiveCam'},
+{id:4,title:'Riga - Doma laukums',city:'riga',type:'pilseta',src:'https://www.balticlivecam.com/cameras/latvia/riga-dome-square/',label:'BalticLiveCam'},
+{id:5,title:'Riga - Līvu laukums',city:'riga',type:'pilseta',src:'https://www.balticlivecam.com/cameras/latvia/riga-livu-square/',label:'BalticLiveCam'},
+{id:6,title:'Jurmala - Majori',city:'jurmala',type:'pilseta',src:'https://www.balticlivecam.com/cameras/latvia/jurmala/',label:'BalticLiveCam'},
+{id:7,title:'Sigulda - Gauja',city:'sigulda',type:'daba',src:'https://www.balticlivecam.com/cameras/latvia/sigulda/',label:'BalticLiveCam'},
+{id:8,title:'Latvija - Laika karte',city:'latvija',type:'laika',src:'https://embed.windy.com/embed2.html?lat=56.946&lon=24.105&detailLat=56.946&detailLon=24.105&width=650&height=450&panelinit=wind&menuOpen=false&message=true&marker=true&forecast=12&zoom=6&pressure=false&type=map&location=coordinates&detail=true&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1',label:'Windy'},
+{id:9,title:'Riga - YouTube Live',city:'riga',type:'pilseta',src:'https://www.youtube.com/embed/live_stream?channel=UCpnJeQIiOZoJiPuYHHzSbkw&autoplay=1',label:'YouTube'},
+{id:10,title:'Liepāja - Jūra',city:'liepaja',type:'daba',src:'https://www.skylinewebcams.com/en/webcam/latvija/liepaja/liepaja/liepaja-beach.html',label:'SkylineWebcams'},
+{id:11,title:'Ventspils - Osta',city:'ventspils',type:'pilseta',src:'https://www.skylinewebcams.com/en/webcam/latvija/ventspils/ventspils/ventspils-port.html',label:'SkylineWebcams'},
+{id:12,title:'Latvija - Radars',city:'latvija',type:'laika',src:'https://embed.windy.com/embed2.html?lat=56.946&lon=24.105&detailLat=56.946&detailLon=24.105&width=650&height=450&panelinit=radar&menuOpen=false&message=true&marker=true&forecast=12&zoom=6&pressure=false&type=map&location=coordinates&detail=false&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1',label:'Windy'}
+];
+function renderCams(list){
+const grid=document.getElementById('grid');
+grid.innerHTML='';
+if(list.length===0){grid.innerHTML='<div class="no-results">Nav atrasta neviena kamera atbilstoši filtriem.</div>';return;}
+list.forEach(c=>{
+const card=document.createElement('div');
+card.className='cam-card';
+card.innerHTML=`<div class="cam-header"><span class="cam-title">${c.title}</span><span class="cam-badge">${c.label}</span></div><div class="cam-frame"><iframe src="${c.src}" allow="autoplay" allowfullscreen loading="lazy"></iframe></div><div class="cam-meta"><span>${cityName(c.city)}</span><span>${typeName(c.type)}</span></div>`;
+grid.appendChild(card);
+});
+document.getElementById('statsBar').textContent=`Rāda ${list.length} no ${cameras.length} kamerām`;
+}
+function cityName(c){const m={riga:'Rīga',jurmala:'Jūrmala',liepaja:'Liepāja',ventspils:'Ventspils',sigulda:'Sigulda',latvija:'Latvija'};return m[c]||c;}
+function typeName(t){const m={pilseta:'Pilsēta',daba:'Daba',laika:'Laika apstākļi',celojumi:'Ceļojumi'};return m[t]||t;}
+function filterCams(){
+const s=document.getElementById('search').value.toLowerCase();
+const city=document.getElementById('cityFilter').value;
+const type=document.getElementById('typeFilter').value;
+const filtered=cameras.filter(c=>{
+const matchS=!s||c.title.toLowerCase().includes(s)||c.label.toLowerCase().includes(s);
+const matchC=!city||c.city===city;
+const matchT=!type||c.type===type;
+return matchS&&matchC&&matchT;
+});
+renderCams(filtered);
+}
+function resetFilters(){
+document.getElementById('search').value='';
+document.getElementById('cityFilter').value='';
+document.getElementById('typeFilter').value='';
+filterCams();
+}
+renderCams(cameras);
+</script>
+</body>
+</html>
