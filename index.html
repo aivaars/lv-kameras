@@ -1,143 +1,136 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>World Live Cams - Daytime Now</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Arial,sans-serif;background:#0d1117;color:#eee;min-height:100vh}
-.header{background:#161b22;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-bottom:2px solid #f0a500}
-.header h1{font-size:1.15rem;color:#f0a500;white-space:nowrap}
-.header .subtitle{font-size:0.75rem;color:#888;margin-top:2px}
-.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.filters input,.filters select{background:#21262d;color:#eee;border:1px solid #f0a500;border-radius:4px;padding:6px 10px;font-size:0.85rem}
-.filters button{background:#f0a500;color:#000;border:none;border-radius:4px;padding:6px 14px;cursor:pointer;font-size:0.85rem;font-weight:bold}
-.filters button:hover{background:#d49000}
-.stats{font-size:0.8rem;color:#aaa;padding:4px 20px;background:#161b22;border-bottom:1px solid #21262d}
-.tz-bar{padding:6px 20px;background:#0d1117;display:flex;gap:12px;flex-wrap:wrap;font-size:0.72rem;color:#aaa;border-bottom:1px solid #21262d}
-.tz-item{display:flex;flex-direction:column;align-items:center;background:#161b22;padding:4px 10px;border-radius:4px;min-width:80px}
-.tz-city{color:#f0a500;font-weight:bold}
-.tz-time{color:#4ade80;font-size:0.8rem}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:10px}
-.cam-card{background:#161b22;border-radius:6px;overflow:hidden;border:1px solid #21262d;transition:border-color 0.2s}
-.cam-card:hover{border-color:#f0a500}
-.cam-header{padding:5px 8px;background:#21262d;display:flex;justify-content:space-between;align-items:center}
-.cam-title{font-size:0.75rem;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px}
-.cam-badge{font-size:0.65rem;background:#f0a500;color:#000;padding:1px 5px;border-radius:3px;white-space:nowrap}
-.cam-frame{position:relative;width:100%;padding-top:56.25%}
-.cam-frame iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
-.cam-meta{padding:4px 8px;font-size:0.7rem;color:#888;display:flex;justify-content:space-between}
-.cam-meta .local-time{color:#4ade80;font-weight:bold}
-.cam-card.hidden{display:none}
-.no-results{grid-column:1/-1;text-align:center;padding:40px;color:#aaa;font-size:1rem}
-@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:500px){.grid{grid-template-columns:1fr}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Daytime Live Cams</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0b0e14; color: #e1e4e8; min-height: 100vh; }
+        .header { background: #161b22; padding: 15px 25px; border-bottom: 2px solid #f0a500; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .header h1 { color: #f0a500; font-size: 1.4rem; }
+        .header .controls { display: flex; gap: 10px; align-items: center; }
+        .btn { background: #f0a500; color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn:hover { background: #d49000; }
+        .stats-bar { background: #1c2128; padding: 8px 25px; font-size: 0.85rem; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px; padding: 20px; }
+        .card { background: #161b22; border-radius: 8px; overflow: hidden; border: 1px solid #30363d; transition: 0.3s; }
+        .card:hover { border-color: #f0a500; transform: translateY(-2px); }
+        .card-header { padding: 10px; background: #21262d; display: flex; justify-content: space-between; align-items: center; }
+        .card-title { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #f0a500; color: #000; font-weight: bold; }
+        .frame-box { position: relative; padding-top: 56.25%; background: #000; }
+        .frame-box iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        .card-footer { padding: 8px 10px; font-size: 0.8rem; color: #8b949e; display: flex; justify-content: space-between; align-items: center; }
+        .time-badge { color: #4ade80; font-weight: bold; }
+        .no-results { grid-column: 1/-1; text-align: center; padding: 50px; color: #8b949e; }
+        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+    </style>
 </head>
 <body>
-<div class="header">
-<div>
-<h1>&#127757; World Live Cams &mdash; Daytime Now</h1>
-<div class="subtitle">Live cameras from locations currently in daylight (UTC+8 to UTC+13) &mdash; Midday &plusmn;2h</div>
-</div>
-<div class="filters">
-<input type="text" id="search" placeholder="Search camera..." oninput="filterCams()">
-<select id="countryFilter" onchange="filterCams()">
-<option value="">All countries</option>
-<option value="australia">Australia</option>
-<option value="japan">Japan</option>
-<option value="newzealand">New Zealand</option>
-<option value="southkorea">South Korea</option>
-<option value="philippines">Philippines</option>
-<option value="singapore">Singapore</option>
-</select>
-<select id="typeFilter" onchange="filterCams()">
-<option value="">All types</option>
-<option value="city">City</option>
-<option value="nature">Nature</option>
-<option value="beach">Beach</option>
-<option value="traffic">Traffic</option>
-</select>
-<button onclick="resetFilters()">Reset</button>
-</div>
-</div>
-<div class="tz-bar" id="tzBar"></div>
-<div class="stats" id="statsBar">Loading...</div>
-<div class="grid" id="grid"></div>
-<script>
-var cameras = [
-{id:1,title:'Sydney - Opera House',country:'australia',type:'city',utcOffset:11,src:'https://www.youtube.com/embed/5uZa3-RMFos?autoplay=1&mute=1',label:'YouTube'},
-{id:2,title:'Sydney - Harbour Panning',country:'australia',type:'city',utcOffset:11,src:'https://www.youtube.com/embed/jshwkG1ZpP8?autoplay=1&mute=1',label:'YouTube'},
-{id:3,title:'Melbourne - City Intersection',country:'australia',type:'traffic',utcOffset:11,src:'https://www.youtube.com/embed/fOiFXweVdrE?autoplay=1&mute=1',label:'YouTube'},
-{id:4,title:'Brisbane - Webcams',country:'australia',type:'city',utcOffset:10,src:'https://embed.windy.com/embed2.html?lat=-27.47&lon=153.02&detailLat=-27.47&detailLon=153.02&width=650&height=450&panelinit=webcams&menuOpen=false&message=false&marker=true&forecast=12&zoom=11&pressure=false&type=map&location=coordinates&detail=false&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1',label:'Windy'},
-{id:5,title:'Tokyo - Shibuya Crossing',country:'japan',type:'traffic',utcOffset:9,src:'https://www.youtube.com/embed/8H3nRCFVR6Y?autoplay=1&mute=1',label:'YouTube'},
-{id:6,title:'Tokyo - City Webcams',country:'japan',type:'city',utcOffset:9,src:'https://embed.windy.com/embed2.html?lat=35.68&lon=139.69&detailLat=35.68&detailLon=139.69&width=650&height=450&panelinit=webcams&menuOpen=false&message=false&marker=true&forecast=12&zoom=12&pressure=false&type=map&location=coordinates&detail=false&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1',label:'Windy'},
-{id:7,title:'Auckland - Skyline & Harbour',country:'newzealand',type:'city',utcOffset:13,src:'https://www.youtube.com/embed/BQR800Gu28g?autoplay=1&mute=1',label:'YouTube'},
-{id:8,title:'Auckland - City Live 4K',country:'newzealand',type:'city',utcOffset:13,src:'https://www.youtube.com/embed/LzoqdE76sqI?autoplay=1&mute=1',label:'YouTube'},
-{id:9,title:'Seoul - City Webcams',country:'southkorea',type:'city',utcOffset:9,src:'https://embed.windy.com/embed2.html?lat=37.56&lon=126.97&detailLat=37.56&detailLon=126.97&width=650&height=450&panelinit=webcams&menuOpen=false&message=false&marker=true&forecast=12&zoom=12&pressure=false&type=map&location=coordinates&detail=false&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1',label:'Windy'},
-{id:10,title:'Singapore - Marina Bay',country:'singapore',type:'city',utcOffset:8,src:'https://embed.windy.com/embed2.html?lat=1.28&lon=103.85&detailLat=1.28&detailLon=103.85&width=650&height=450&panelinit=webcams&menuOpen=false&message=false&marker=true&forecast=12&zoom=13&pressure=false&type=map&location=coordinates&detail=false&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1',label:'Windy'},
-{id:11,title:'Manila - City Webcams',country:'philippines',type:'city',utcOffset:8,src:'https://embed.windy.com/embed2.html?lat=14.59&lon=120.98&detailLat=14.59&detailLon=120.98&width=650&height=450&panelinit=webcams&menuOpen=false&message=false&marker=true&forecast=12&zoom=12&pressure=false&type=map&location=coordinates&detail=false&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1',label:'Windy'},
-{id:12,title:'Gold Coast - Beach',country:'australia',type:'beach',utcOffset:10,src:'https://embed.windy.com/embed2.html?lat=-28.00&lon=153.43&detailLat=-28.00&detailLon=153.43&width=650&height=450&panelinit=webcams&menuOpen=false&message=false&marker=true&forecast=12&zoom=13&pressure=false&type=map&location=coordinates&detail=false&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1',label:'Windy'}
-];
-var tzClocks=[
-{city:'Sydney',utc:11,flag:'AU'},
-{city:'Tokyo',utc:9,flag:'JP'},
-{city:'Auckland',utc:13,flag:'NZ'},
-{city:'Seoul',utc:9,flag:'KR'},
-{city:'Singapore',utc:8,flag:'SG'},
-{city:'Manila',utc:8,flag:'PH'}
-];
-function getLocalTime(utcOffset){
-var now=new Date();
-var utcMs=now.getTime()+now.getTimezoneOffset()*60000;
-var local=new Date(utcMs+utcOffset*3600000);
-var h=String(local.getHours()).padStart(2,'0');
-var m=String(local.getMinutes()).padStart(2,'0');
-return h+':'+m;
-}
-function renderTzBar(){
-var bar=document.getElementById('tzBar');
-bar.innerHTML=tzClocks.map(function(t){return '<div class="tz-item"><span class="tz-city">'+t.flag+' '+t.city+'</span><span class="tz-time">'+getLocalTime(t.utc)+'</span></div>';}).join('');
-}
-function countryName(c){var m={australia:'Australia',japan:'Japan',newzealand:'New Zealand',southkorea:'South Korea',philippines:'Philippines',singapore:'Singapore'};return m[c]||c;}
-function renderCams(list){
-var grid=document.getElementById('grid');
-grid.innerHTML='';
-if(list.length===0){grid.innerHTML='<div class="no-results">No cameras found.</div>';return;}
-list.forEach(function(c){
-var card=document.createElement('div');
-card.className='cam-card';
-var t=getLocalTime(c.utcOffset);
-card.innerHTML='<div class="cam-header"><span class="cam-title">'+c.title+'</span><span class="cam-badge">'+c.label+'</span></div><div class="cam-frame"><iframe src="'+c.src+'" allow="autoplay" allowfullscreen loading="lazy"></iframe></div><div class="cam-meta"><span>'+countryName(c.country)+'</span><span class="local-time">&#9728; '+t+' local</span></div>';
-grid.appendChild(card);
-});
-var now=new Date();
-var uh=String(now.getUTCHours()).padStart(2,'0');
-var um=String(now.getUTCMinutes()).padStart(2,'0');
-document.getElementById('statsBar').textContent='Showing '+list.length+' of '+cameras.length+' cameras | UTC time: '+uh+':'+um;
-}
-function filterCams(){
-var s=document.getElementById('search').value.toLowerCase();
-var country=document.getElementById('countryFilter').value;
-var type=document.getElementById('typeFilter').value;
-var filtered=cameras.filter(function(c){
-var matchS=!s||c.title.toLowerCase().indexOf(s)>=0||countryName(c.country).toLowerCase().indexOf(s)>=0;
-var matchC=!country||c.country===country;
-var matchT=!type||c.type===type;
-return matchS&&matchC&&matchT;
-});
-renderCams(filtered);
-}
-function resetFilters(){
-document.getElementById('search').value='';
-document.getElementById('countryFilter').value='';
-document.getElementById('typeFilter').value='';
-filterCams();
-}
-renderTzBar();
-renderCams(cameras);
-setInterval(function(){renderTzBar();},60000);
-</script>
+    <div class="header">
+        <h1>☀️ Daytime World Explorer</h1>
+        <div class="controls">
+            <span id="utcTime" style="font-family: monospace; font-size: 1.1rem; color: #4ade80;"></span>
+            <button class="btn" onclick="updateView()">Refresh Daytime Cams</button>
+        </div>
+    </div>
+    <div class="stats-bar">
+        <span id="statsText">Initializing...</span>
+        <span>Auto-filtering for local time 08:00 - 18:00</span>
+    </div>
+    <div class="grid" id="grid"></div>
+
+    <script>
+        // Database of real stable live cams with their UTC offsets
+        const camDB = [
+            // UTC +13 / +12 (New Zealand, Fiji)
+            { title: 'Auckland - Harbour Skyline', offset: 13, src: 'https://www.youtube.com/embed/BQR800Gu28g?autoplay=1&mute=1', provider: 'YouTube' },
+            { title: 'Auckland - CBD 4K', offset: 13, src: 'https://www.youtube.com/embed/LzoqdE76sqI?autoplay=1&mute=1', provider: 'YouTube' },
+            
+            // UTC +11 / +10 (Australia East Coast)
+            { title: 'Sydney - Opera House', offset: 11, src: 'https://www.youtube.com/embed/5uZa3-RMFos?autoplay=1&mute=1', provider: 'YouTube' },
+            { title: 'Sydney - Harbour Bridge', offset: 11, src: 'https://www.youtube.com/embed/jshwkG1ZpP8?autoplay=1&mute=1', provider: 'YouTube' },
+            { title: 'Melbourne - Street View', offset: 11, src: 'https://www.youtube.com/embed/fOiFXweVdrE?autoplay=1&mute=1', provider: 'YouTube' },
+            { title: 'Brisbane - City Panorama', offset: 10, src: 'https://embed.windy.com/embed2.html?lat=-27.47&lon=153.02&zoom=11&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=&metricTemp=&radarRange=-1', provider: 'Windy' },
+
+            // UTC +9 (Japan, Korea)
+            { title: 'Tokyo - Shibuya Crossing', offset: 9, src: 'https://www.youtube.com/embed/8H3nRCFVR6Y?autoplay=1&mute=1', provider: 'YouTube' },
+            { title: 'Tokyo - Rainbow Bridge', offset: 9, src: 'https://embed.windy.com/embed2.html?lat=35.63&lon=139.77&zoom=12&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=&metricTemp=&radarRange=-1', provider: 'Windy' },
+            { title: 'Seoul - Han River', offset: 9, src: 'https://embed.windy.com/embed2.html?lat=37.56&lon=126.97&zoom=11&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=&metricTemp=&radarRange=-1', provider: 'Windy' },
+
+            // UTC +8 (Singapore, Manila, Perth)
+            { title: 'Singapore - Marina Bay', offset: 8, src: 'https://embed.windy.com/embed2.html?lat=1.28&lon=103.85&zoom=13&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=&metricTemp=&radarRange=-1', provider: 'Windy' },
+            { title: 'Manila - Makati Skyline', offset: 8, src: 'https://embed.windy.com/embed2.html?lat=14.55&lon=121.02&zoom=12&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=&metricTemp=&radarRange=-1', provider: 'Windy' },
+
+            // UTC +5.5 (India)
+            { title: 'Mumbai - Marine Drive', offset: 5.5, src: 'https://embed.windy.com/embed2.html?lat=18.94&lon=72.82&zoom=12&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=&metricTemp=&radarRange=-1', provider: 'Windy' },
+
+            // UTC +4 / +3 (Dubai, Istanbul, Nairobi)
+            { title: 'Dubai - Marina Skyline', offset: 4, src: 'https://www.youtube.com/embed/ka9MsehA8I4?autoplay=1&mute=1', provider: 'YouTube' },
+            { title: 'Istanbul - Bosphorus', offset: 3, src: 'https://www.youtube.com/embed/0xFW3MBtpVE?autoplay=1&mute=1', provider: 'YouTube' },
+            { title: 'Kenya - Wildlife Safari', offset: 3, src: 'https://www.youtube.com/embed/qpukdDslCjk?autoplay=1&mute=1', provider: 'YouTube' },
+
+            // UTC +2 / +1 (Europe daytime starts later)
+            { title: 'Riga - Old Town', offset: 2, src: 'https://www.balticlivecam.com/cameras/latvia/riga-old-town/', provider: 'BalticLiveCam' },
+            { title: 'Berlin - Brandenburg Gate', offset: 1, src: 'https://embed.windy.com/embed2.html?lat=52.51&lon=13.37&zoom=13&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=&metricTemp=&radarRange=-1', provider: 'Windy' },
+
+            // UTC 0 / -5 (Atlantic, Americas - Currently Night/Morning)
+            { title: 'New York - Times Square', offset: -5, src: 'https://www.youtube.com/embed/rnXIjl_Rzy4?autoplay=1&mute=1', provider: 'YouTube' },
+            { title: 'Miami - Beach Front', offset: -5, src: 'https://embed.windy.com/embed2.html?lat=25.76&lon=-80.13&zoom=13&level=surface&overlay=wind&product=ecmwf&menu=&message=&marker=&calendar=now&pressure=&type=map&location=coordinates&detail=&metricWind=&metricTemp=&radarRange=-1', provider: 'Windy' }
+        ];
+
+        function getLocalTimeData(offset) {
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const local = new Date(utc + (3600000 * offset));
+            return {
+                hours: local.getHours(),
+                minutes: local.getMinutes(),
+                full: local.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+            };
+        }
+
+        function updateView() {
+            const grid = document.getElementById('grid');
+            const stats = document.getElementById('statsText');
+            grid.innerHTML = '';
+            
+            const daytimeCams = camDB.filter(cam => {
+                const time = getLocalTimeData(cam.offset);
+                // Filtering for daytime: between 08:00 and 18:00 local time
+                return time.hours >= 8 && time.hours <= 18;
+            });
+
+            daytimeCams.forEach(cam => {
+                const time = getLocalTimeData(cam.offset);
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="card-title">${cam.title}</span>
+                        <span class="badge">${cam.provider}</span>
+                    </div>
+                    <div class="frame-box">
+                        <iframe src="${cam.src}" allow="autoplay; fullscreen" loading="lazy"></iframe>
+                    </div>
+                    <div class="card-footer">
+                        <span>UTC ${cam.offset >= 0 ? '+' : ''}${cam.offset}</span>
+                        <span class="time-badge">Local: ${time.full}</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            stats.innerText = `Found ${daytimeCams.length} locations currently in daylight.`;
+            
+            const now = new Date();
+            document.getElementById('utcTime').innerText = `UTC: ${now.getUTCHours().toString().padStart(2, '0')}:${now.getUTCMinutes().toString().padStart(2, '0')}`;
+        }
+
+        updateView();
+        // Refresh every 5 minutes
+        setInterval(updateView, 300000);
+    </script>
 </body>
 </html>
