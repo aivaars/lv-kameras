@@ -5,93 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Latvijas Live Kameru Portāls</title>
     <style>
-        :root { --accent: #00ffcc; --bg: #0a0c10; --card: #151921; --text: #e1e4e8; }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
-        header { background: #161b22; padding: 1rem 2rem; border-bottom: 2px solid var(--accent); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
-        .logo { font-size: 1.5rem; font-weight: 900; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; padding: 2rem; }
-        .card { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid #30363d; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; }
-        .card:hover { border-color: var(--accent); transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,255,204,0.1); }
-        .video-container { position: relative; padding-top: 56.25%; background: #000; }
-        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-        .card-info { padding: 1rem; border-top: 1px solid #30363d; }
-        .card-title { font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem; display: flex; justify-content: space-between; }
-        .live-tag { color: #ff4444; font-size: 0.7rem; font-weight: 900; display: flex; align-items: center; gap: 4px; }
-        .live-tag::before { content: ''; width: 8px; height: 8px; background: #ff4444; border-radius: 50%; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-        .filters { padding: 0.5rem 2rem; background: #1c2128; border-bottom: 1px solid #30363d; display: flex; gap: 1rem; overflow-x: auto; }
-        .filter-btn { background: none; border: 1px solid #30363d; color: #8b949e; padding: 0.4rem 1rem; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 0.85rem; }
-        .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
-        .stats { font-size: 0.8rem; color: #8b949e; }
-        @media (max-width: 600px) { .grid { grid-template-columns: 1fr; padding: 1rem; } }
+        body { font-family: sans-serif; background: #0b0e14; color: #fff; margin: 0; }
+        header { background: #161b22; padding: 20px; border-bottom: 2px solid #00ffcc; text-align: center; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; padding: 20px; }
+        .card { background: #1c2128; border-radius: 8px; border: 1px solid #30363d; overflow: hidden; }
+        .video-box { position: relative; padding-top: 56.25%; background: #000; }
+        .video-box iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+        .info { padding: 15px; }
+        .title { font-weight: bold; font-size: 1.1rem; }
     </style>
 </head>
 <body>
-    <header>
-        <div class="logo">Latvia Live 🎥</div>
-        <div class="stats" id="camStats">Ielādē kameras...</div>
-    </header>
-    <div class="filters" id="filterContainer">
-        <button class="filter-btn active" onclick="filterCams('all')">Visi</button>
-        <button class="filter-btn" onclick="filterCams('riga')">Rīga</button>
-        <button class="filter-btn" onclick="filterCams('city')">Pilsētas</button>
-        <button class="filter-btn" onclick="filterCams('nature')">Daba</button>
-    </div>
-    <main class="grid" id="camGrid"></main>
-
+    <header><h1>Latvijas Tiešraides 🎥</h1></header>
+    <div class="grid" id="grid"></div>
     <script>
-        const cameras = [
-            { id: 'aNH6O86-6wQ', title: 'Rīga - Ielas skats', city: 'Rīga', type: 'riga' },
-            { id: '3wSd4iXrCw0', title: 'Durbes jūras ērgļi', city: 'Durbe', type: 'nature' },
-            { id: 'vu7bChYGfiA', title: 'LDF Jūras ērglis #1', city: 'Latvija', type: 'nature' },
-            { id: 'Bo7z7WwAFZs', title: 'Baltie stārķi (Tukums)', city: 'Tukums', type: 'nature' },
-            { id: 'j68XhwtLGhM', title: 'Rīgas Lidosta', city: 'Rīga', type: 'riga' },
-            { id: 'THA7pGNnpGs', title: 'Rīgas Centrs', city: 'Rīga', type: 'riga' },
-            { id: 'BnLcCs_NYUM', title: 'Baltijas jūra', city: 'Latvija', type: 'nature' },
-            { id: 'qrDNVHnSmpA', title: 'Bikernieki', city: 'Rīga', type: 'city' },
-            { id: 'Mgu__P7-KgU', title: 'Rīgas Vakara Panorāma', city: 'Rīga', type: 'riga' },
-            { id: '1eInqIDEdsg', title: 'Rīgas Futsals', city: 'Rīga', type: 'city' },
-            { id: 'VnEjrCFV1lo', title: 'Nakts Rīga', city: 'Rīga', type: 'riga' },
-            { id: 'RjvdRAdda0c', title: 'Sporta notikumi LV', city: 'Latvija', type: 'city' }
+        var cams = [
+            { id: "aNH6O86-6wQ", t: "Rīga - Ielas skats" },
+            { id: "3wSd4iXrCw0", t: "Durbe - Ērgļi" },
+            { id: "vu7bChYGfiA", t: "LDF Jūras ērgļi" },
+            { id: "Bo7z7WwAFZs", t: "Tukums - Stārķi" },
+            { id: "j68XhwtLGhM", t: "Rīgas Lidosta" },
+            { id: "THA7pGNnpGs", t: "Rīgas Centrs" },
+            { id: "BnLcCs_NYUM", t: "Baltijas jūra" },
+            { id: "qrDNVHnSmpA", t: "Biķernieki" },
+            { id: "Mgu__P7-KgU", t: "Rīgas Panorāma" },
+            { id: "1eInqIDEdsg", t: "Sports / Futsals" },
+            { id: "VnEjrCFV1lo", t: "Rīgas Nakts" },
+            { id: "RjvdRAdda0c", t: "Sporta tiešraides" }
         ];
-
-        function renderCams(filter = 'all') {
-            const grid = document.getElementById('camGrid');
-            const stats = document.getElementById('camStats');
-            if (!grid) return;
-            grid.innerHTML = '';
-            const filtered = filter === 'all' ? cameras : cameras.filter(c => c.type === filter);
-            
-            filtered.forEach(cam => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                const videoUrl = 'https://www.youtube.com/embed/' + cam.id + '?autoplay=1&mute=1&rel=0';
-                card.innerHTML = `
-                    <div class="video-container">
-                        <iframe sr="\${videoUrl}" 
-                                allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>
-                    </div>
-                    <div class="cad-info">
-                        <div class="card-title">
-                            <span>${cam.title}</span>
-                            <span class="live-tag">LIVE</span>
-                        </div>
-                        <div class="stats">\${cam.city}</div>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-            if (stats) stats.innerText = 'Rāda ' + filtered.length + ' kameras';
+        var grid = document.getElementById("grid");
+        for (var i = 0; i < cams.length; i++) {
+            var c = cams[i];
+            var card = document.createElement("div");
+            card.className = "card";
+            card.innerHTML = '<div class="video-box"><iframe src="https://www.youtube.com/embed/' + c.id + '?autoplay=1&mute=1" allowfullscreen></iframe></div>' +
+                             '<div class="info"><div class="title">' + c.t + '</div></div>';
+            grid.appendChild(card);
         }
-
-        function filterCams(type) {
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            if (event && event.target) event.target.classList.add('active');
-            renderCams(type);
-        }
-
-        window.onload = () => renderCams();
     </script>
 </body>
 </html>
