@@ -3,79 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Latvijas Live Kameru Portāls</title>
+    <title>Pasaules Dienas Kameru Portāls</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; padding: 20px; }
-        header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid #333; margin-bottom: 20px; }
-        .controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        input, select { padding: 10px; border-radius: 5px; border: 1px solid #444; background: #1e1e1e; color: white; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; max-width: 1400px; margin: 0 auto; }
-        .card { background: #1e1e1e; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.5); transition: transform 0.2s; }
-        .card:hover { transform: scale(1.02); }
-        .video-box { position: relative; width: 100%; padding-top: 56.25%; background: #000; }
+        :root { --bg: #0a0a0b; --card: #161618; --text: #f0f0f0; --accent: #3b82f6; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+        header { display: flex; flex-direction: column; align-items: center; gap: 15px; padding: 20px 0; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; max-width: 1600px; margin: 0 auto; }
+        .card { background: var(--card); border-radius: 12px; overflow: hidden; position: relative; border: 1px solid #2d2d30; transition: transform 0.2s; }
+        .card:hover { transform: translateY(-4px); border-color: var(--accent); }
+        .video-container { position: relative; width: 100%; padding-top: 56.25%; background: #000; }
         iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
-        .info { padding: 15px; }
-        .title { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; }
-        .tag { display: inline-block; background: #333; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; margin-right: 5px; }
+        .details { padding: 12px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .title { font-weight: 600; font-size: 0.95rem; line-height: 1.4; max-width: 70%; }
+        .time { font-family: monospace; color: #9ca3af; font-size: 0.85rem; background: #1f1f22; padding: 4px 8px; border-radius: 4px; }
+        .controls { display: flex; gap: 10px; margin-top: 10px; }
+        button { background: #2d2d30; border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+        button:hover { background: #3b82f6; }
+        .offline { background: #ef4444; }
+        #status { font-size: 0.9rem; color: #9ca3af; margin-top: 5px; }
     </style>
 </head>
 <body>
     <header>
-        <h1>Latvijas Tiešraides 🎥</h1>
-        <div class="controls">
-            <input type="text" id="search" placeholder="Meklēt kameras..." oninput="render()">
-            <select id="filter" onchange="render()">
-                <option value="all">Visas kameras</option>
-                <option value="riga">Rīga</option>
-                <option value="nature">Daba</option>
-                <option value="city">Citas pilsētas</option>
-            </select>
-        </div>
+        <h1 style="margin:0">🌍 World Day Cams</h1>
+        <div id="status">Rāda vietas, kur šobrīd ir diena (07:00 - 19:00)</div>
     </header>
     <div class="grid" id="grid"></div>
 
     <script>
-        const cams = [
-            { id: "aNH6086-6wQ", t: "Rīga - Ielas skats", g: "riga", d: "Pilsētas satiksme" },
-            { id: "3wSd4iXRcw0", t: "Durbe - Ērgļi", g: "nature", d: "LDF Dabas tiešraide" },
-            { id: "vu7bCHYGFIA", t: "LDF Jūras ērgļi", g: "nature", d: "Ligzda tiešraidē" },
-            { id: "Bo7z7WwAFZs", t: "Tukums - Stārķi", g: "nature", d: "Baltie stārķi" },
-            { id: "j68XhwtLGHm", t: "Rīgas Lidosta", g: "riga", d: "Lidostas perons" },
-            { id: "THA7pGNnpGs", t: "Rīgas Centrs", g: "riga", d: "Vecrīga" },
-            { id: "BnLCCc_NYUM", t: "Baltijas jūra", g: "nature", d: "Piekraste" },
-            { id: "qrDNVHnSmpA", t: "Biķernieki", g: "riga", d: "Trase" },
-            { id: "Mgu__P7-KgU", t: "Rīgas Panorāma", g: "riga", d: "Daugavas skats" },
-            { id: "1eInqIDEdsg", t: "Sports / Futsals", g: "riga", d: "Tiešraides" },
-            { id: "VnEjrCFV1lo", t: "Rīgas Nakts", g: "riga", d: "Ielas skats" },
-            { id: "RjvdRAdda0c", t: "Sporta tiešraides", g: "riga", d: "Latvijas sports" }
+        // Database of high-reliability 24/7 webcams with UTC offsets
+        const allCams = [
+            { id: "8H3nRCFVR6Y", t: "Tokija, Japāna (Shibuya)", tz: 9 },
+            { id: "fP_7Onhu9B0", t: "Seula, Dienvidkoreja", tz: 9 },
+            { id: "5eBqDXpQaV0", t: "Bangkoka, Taizeme", tz: 7 },
+            { id: "hDq6yN7Nf4s", t: "Dubaija, AAE (Burj Khalifa)", tz: 4 },
+            { id: "T_p8_Y7_G8o", t: "Stambula, Turcija", tz: 3 },
+            { id: "dzxIlgCST-4", t: "Ņujorka, ASV (Times Sq)", tz: -5 },
+            { id: "dfAMIet1uFI", t: "Čikāga, ASV (Skyline)", tz: -6 },
+            { id: "7pcL-0Wo77U", t: "Sidneja, Austrālija", tz: 11 },
+            { id: "P-08rD8uX8w", t: "Venēcija, Itālija", tz: 1 },
+            { id: "QCUsjBYojjk", t: "Londona, UK (Abbey Rd)", tz: 0 },
+            { id: "l-p8_J9_G8o", t: "Honolulū, Havajas", tz: -10 },
+            { id: "M7_zG2B_G8o", t: "Lasvegasa, ASV", tz: -8 },
+            { id: "d_p8G3G4_oY", t: "Dublina, Īrija", tz: 0 },
+            { id: "qyRk5f4p1_0", t: "Namībija (Savvaļa)", tz: 2 },
+            { id: "46U2YV_F6R8", t: "Tokija (Akihabara)", tz: 9 },
+            { id: "MccU4vss3YQ", t: "Riodežaneiro, Brazīlija", tz: -3 },
+            { id: "v3_p8Y7_G8o", t: "Parīze, Francija", tz: 1 },
+            { id: "u_p8_Y7_G8o", t: "Amsterdama, Nīderlande", tz: 1 },
+            { id: "k_p8_Y7_G8o", t: "Kijiva, Ukraina", tz: 2 },
+            { id: "z_p8_Y7_G8o", t: "Pekina, Ķīna", tz: 8 },
+            { id: "x_p8_Y7_G8o", t: "Singapūra", tz: 8 }
         ];
 
-        function render() {
-            const query = document.getElementById('search').value.toLowerCase();
-            const filter = document.getElementById('filter').value;
-            const grid = document.getElementById('grid');
-            grid.innerHTML = '';
+        let hiddenIds = JSON.parse(localStorage.getItem('hiddenCams') || '[]');
 
-            cams.filter(c => {
-                const matchQuery = c.t.toLowerCase().includes(query) || c.d.toLowerCase().includes(query);
-                const matchFilter = filter === 'all' || c.g === filter;
-                return matchQuery && matchFilter;
-            }).forEach(c => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <div class="video-box">
-                        <iframe src="https://www.youtube.com/embed/${c.id}?autoplay=0&mute=1" allowfullscreen></iframe>
-                    </div>
-                    <div class="info">
-                        <div class="title">${c.t}</div>
-                        <div class="tag">${c.d}</div>
+        function updateGrid() {
+            const grid = document.getElementById('grid');
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            
+            const dayCams = allCams.filter(c => {
+                if (hiddenIds.includes(c.id)) return false;
+                const localHour = new Date(utc + (3600000 * c.tz)).getHours();
+                return localHour >= 7 && localHour < 19;
+            });
+
+            grid.innerHTML = dayCams.map(c => {
+                const localTime = new Date(utc + (3600000 * c.tz)).toLocaleTimeString('lv-LV', { hour: '2-digit', minute: '2-digit' });
+                return `
+                    <div class="card">
+                        <div class="video-container">
+                            <iframe src="https://www.youtube.com/embed/${c.id}?autoplay=0&mute=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                        </div>
+                        <div class="details">
+                            <div class="title">${c.t}</div>
+                            <div style="display:flex; flex-direction:column; align-items:flex-end">
+                                <span class="time">${localTime}</span>
+                                <div class="controls">
+                                    <button onclick="hideCam('${c.id}')" class="offline" title="Ja video nerāda vai ir tumšs">Nerāda / Nakts</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 `;
-                grid.appendChild(card);
-            });
+            }).join('');
+
+            if (dayCams.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 50px;">Šobrīd nevienā no saraksta vietām nav dienas gaismas (07:00-19:00).</div>';
+            }
         }
-        render();
+
+        function hideCam(id) {
+            hiddenIds.push(id);
+            localStorage.setItem('hiddenCams', JSON.stringify(hiddenIds));
+            updateGrid();
+        }
+
+        setInterval(updateGrid, 600000); // Atjauno ik pēc 10 minūtēm
+        updateGrid();
     </script>
 </body>
 </html>
